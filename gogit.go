@@ -13,6 +13,7 @@ import (
 	//"bytes"
 	"strings"
 	"fmt"
+	"regexp"
 )
 
 var dirpath string;
@@ -21,15 +22,36 @@ func www(w http.ResponseWriter, r *http.Request) {
 	//f,err := exec.Command("cd",dirpath).Output();
 	result,_ := exec.LookPath(dirpath);
 	glog.Info("Log",result);
+	//fmt.Println(r.RequestURI);
+	var Path = strings.SplitN(r.RequestURI,"?",2);
+	var logRegexp = regexp.MustCompile("^/log/");
+	if logRegexp.MatchString(Path[0]){
+		log();
+	} else{
+		index();
+	}
+}
 
+func index(){
 	f,err := exec.Command("git","log").Output();
 	if err != nil{
 		glog.Error("Cmd Error",err.Error());
 		return;
 	}
-	data := strings.Split(string(f),"\n");
+	data := string(f);
 	fmt.Println(data);
 	glog.Info("Cmd","%d (%s)",len(data),data[0]);
+	//var logRegexp = regexp.MustCompilePOSIX("^commit (.*?)Author: (.*?)Date: (.*?)$");
+	var logRegexp = regexp.MustCompile(`commit(.*?)\sAuthor:(.*?)\sDate:(.*?)\s(.*?)\s`);
+	result := logRegexp.FindAllStringSubmatch(data,-1);
+	fmt.Println(result);
+	for _,val := range result {
+		fmt.Println("....", val,len(val));
+	}
+}
+
+func log(){
+	fmt.Println("Log...");
 }
 
 func main(){
