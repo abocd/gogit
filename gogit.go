@@ -29,7 +29,7 @@ func www(w http.ResponseWriter, r *http.Request) {
 	var Path = strings.SplitN(r.RequestURI,"?",2);
 	var viewRegexp = regexp.MustCompile("^/view");
 	var logRegexp = regexp.MustCompile("^/log");
-	fmt.Println(Path[0],"Path");
+	//fmt.Println(Path[0],"Path");
 	if viewRegexp.MatchString(Path[0]){
 		view();
 	} else if logRegexp.MatchString(Path[0]) {
@@ -106,6 +106,8 @@ func main(){
 		return;
 	}
 	glog.Info("Start","Git目录:%s,浏览器访问 IP:%d",dirpath,*port)
+	fmt.Println(http.Dir("/static/"))
+	http.Handle("/static/", http.FileServer(http.Dir("./")));
 	http.HandleFunc("/", www)
 	err = http.ListenAndServe(":"+strconv.Itoa(*port), nil)
 	if err != nil {
