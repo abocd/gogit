@@ -42,7 +42,7 @@ func index(){
 	fmt.Println(data);
 	glog.Info("Cmd","%d (%s)",len(data),data[0]);
 	//var logRegexp = regexp.MustCompilePOSIX("^commit (.*?)Author: (.*?)Date: (.*?)$");
-	var logRegexp = regexp.MustCompile(`commit(.*?)\sAuthor:(.*?)\sDate:(.*?)\s(.*?)\s`);
+	var logRegexp = regexp.MustCompile(`commit (\w+)\nAuthor:(.*?)\nDate:   (\w{3} \w{3} \d{2} \d{2}:\d{2}:\d{2} \d{4} [+|-]\d{4})\n{1,}([\s\S]*?)\n`);
 	result := logRegexp.FindAllStringSubmatch(data,-1);
 	fmt.Println(result);
 	for _,val := range result {
