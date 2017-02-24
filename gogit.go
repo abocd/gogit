@@ -22,8 +22,6 @@ var dirpath string;
 
 func www(w http.ResponseWriter, r *http.Request) {
 	//f,err := exec.Command("cd",dirpath).Output();
-	result,_ := exec.LookPath(dirpath);
-	glog.Info("Log",result);
 	//fmt.Println(r.RequestURI);
 	var html interface{};
 	var Path = strings.SplitN(r.RequestURI,"?",2);
@@ -54,7 +52,10 @@ type logData struct{
 }
 
 func log(w http.ResponseWriter, r *http.Request){
-	f,err := exec.Command("git","log").Output();
+	//f,err := exec.Command("git","log").Output();
+	cmd := exec.Command("git","log");
+	cmd.Dir = dirpath; //指定command的目录
+	f,err :=cmd.Output();
 	if err != nil{
 		glog.Error("Cmd Error",err.Error());
 		return;
