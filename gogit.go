@@ -14,6 +14,8 @@ import (
 	"strings"
 	"fmt"
 	"regexp"
+	"html/template"
+	"encoding/json"
 )
 
 var dirpath string;
@@ -23,16 +25,35 @@ func www(w http.ResponseWriter, r *http.Request) {
 	result,_ := exec.LookPath(dirpath);
 	glog.Info("Log",result);
 	//fmt.Println(r.RequestURI);
+	var html interface{};
 	var Path = strings.SplitN(r.RequestURI,"?",2);
-	var logRegexp = regexp.MustCompile("^/log/");
-	if logRegexp.MatchString(Path[0]){
-		log();
-	} else{
-		index();
+	var viewRegexp = regexp.MustCompile("^/view");
+	var logRegexp = regexp.MustCompile("^/log");
+	fmt.Println(Path[0],"Path");
+	if viewRegexp.MatchString(Path[0]){
+		view();
+	} else if logRegexp.MatchString(Path[0]) {
+		log(w,r);
+	}else{
+		tpl := template.New("index.html");
+		tpl.ParseFiles("themes/index.html");
+		err := tpl.Execute(w,html);
+		if err != nil{
+			glog.Error("Html","%s",err);
+		}
 	}
+
 }
 
-func index(){
+
+type logData struct{
+	Commit string `json:commit`
+	Author string `json:author`
+	Date string `json:date`
+	Memo string `json:meo`
+}
+
+func log(w http.ResponseWriter, r *http.Request){
 	f,err := exec.Command("git","log").Output();
 	if err != nil{
 		glog.Error("Cmd Error",err.Error());
@@ -42,16 +63,23 @@ func index(){
 	fmt.Println(data);
 	glog.Info("Cmd","%d (%s)",len(data),data[0]);
 	//var logRegexp = regexp.MustCompilePOSIX("^commit (.*?)Author: (.*?)Date: (.*?)$");
-	var logRegexp = regexp.MustCompile(`commit (\w+)\nAuthor:(.*?)\nDate:   (\w{3} \w{3} \d{2} \d{2}:\d{2}:\d{2} \d{4} [+|-]\d{4})\n{1,}([\s\S]*?)\n`);
+	var logRegexp = regexp.MustCompile(`commit (\w+)\nAuthor: (.*?)\nDate:   (\w{3} \w{3} \d{2} \d{2}:\d{2}:\d{2} \d{4} [+|-]\d{4})\n{1,}([\s\S]*?)\n`);
 	result := logRegexp.FindAllStringSubmatch(data,-1);
-	fmt.Println(result);
+	//fmt.Println(result);
+	var logList []logData;
+	//logList = make([]logData);
 	for _,val := range result {
 		fmt.Println("....", val,len(val));
+		dlog := logData{Commit:val[1],Author:val[2],Date:val[3],Memo:strings.Trim(val[4]," ")};
+		logList = append(logList,dlog);
 	}
+	//fmt.Println(logList);
+	jsonList,_ := json.Marshal(logList);
+	fmt.Fprintf(w,string(jsonList));
 }
 
-func log(){
-	fmt.Println("Log...");
+func view(){
+	fmt.Println("view...");
 }
 
 func main(){
