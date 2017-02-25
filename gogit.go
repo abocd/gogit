@@ -124,22 +124,24 @@ func view(w http.ResponseWriter, r *http.Request){
 				break;
 			}
 		newline := string(line);
+		fmt.Print(newline);
 		if fileRegexp.MatchString(newline){
+			//一个文件开始了
+			fileChangeInfo.Lines = lines;
 			if len(fileChangeInfo.Lines)> 0 {
 				fileChangeList = append(fileChangeList, fileChangeInfo);
 			}
 			//清空line
 			fileChangeInfo.FileName = newline;
-			fileChangeInfo.Lines = lines;
 			lines = []string{};
-			//一个文件开始了
 			//isLine = false;
 
 		} else {
 			lines = append(lines,newline);
 		}
 	}
-	if len(fileChangeInfo.Lines) >0 {
+	if len(lines) >0 {
+		fileChangeInfo.Lines = lines;
 		fileChangeList = append(fileChangeList, fileChangeInfo);
 	}
 	fmt.Print(fileChangeList);
