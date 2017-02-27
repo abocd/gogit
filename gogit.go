@@ -48,10 +48,10 @@ func www(w http.ResponseWriter, r *http.Request) {
 
 
 type logData struct{
-	Commit string `json:commit`
-	Author string `json:author`
-	Date string `json:date`
-	Memo string `json:meo`
+	Commit string `json:"Commit"`
+	Author string `json:"Author"`
+	Date string `json:"Date"`
+	Memo string `json:"Memo"`
 }
 
 func log(w http.ResponseWriter, r *http.Request){
@@ -81,7 +81,8 @@ func log(w http.ResponseWriter, r *http.Request){
 		logList = append(logList,dlog);
 	}
 	//fmt.Println(logList);
-	fmt.Fprintf(w,_json(logList));
+	w.Write([]byte(_json(logList)));
+	//fmt.Fprintf(w,_json(logList));
 }
 
 func _json(a interface{}) string{
@@ -94,8 +95,8 @@ func _json(a interface{}) string{
 }
 
 type fileChange struct{
-	FileName string `json:filename`
-	Lines    []string `json:lines`
+	FileName string `json:"Filename"`
+	Lines    []string `json:"Lines"`
 }
 
 func view(w http.ResponseWriter, r *http.Request){
@@ -145,7 +146,8 @@ func view(w http.ResponseWriter, r *http.Request){
 		fileChangeList = append(fileChangeList, fileChangeInfo);
 	}
 	fmt.Print(fileChangeList);
-	fmt.Fprintf(w,_json(fileChangeList));
+	//fmt.Fprintf(w,_json(fileChangeList));
+	w.Write([]byte(_json(fileChangeList)));
 }
 
 var Tips = `-r gitpath
