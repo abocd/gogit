@@ -95,7 +95,7 @@ func _json(a interface{}) string{
 
 type fileChange struct{
 	FileName string `json:filename`
-	Lines    []string `lines`
+	Lines    []string `json:lines`
 }
 
 func view(w http.ResponseWriter, r *http.Request){

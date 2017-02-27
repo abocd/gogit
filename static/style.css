@@ -103,3 +103,15 @@ body {
     display: inline-block;
     border-radius: 50%;
 }
+
+
+.one-file .title{font-weight: 700;}
+.one-file .file-log{
+
+}
+.one-file .file-log dt{width:50px;float:left;}
+.one-file .file-log dl.jia{color:red;}
+.one-file .file-log dl.jian{color:green;}
+
+
+
