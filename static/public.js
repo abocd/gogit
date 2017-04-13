@@ -38,14 +38,15 @@ $(function() {
           var line = d[i].Lines[k];
               log += '<dl class="'+get_class(line)+'">'
                      +'<dt>'+num+'</dt>'
-                     +'<dd>'+line+'</dd>'
+                     +'<dd>'+line.replace("<","&lt;").replace(">","&gt;")+'</dd>'
                      +'</dl>';
               num ++;
         }
         log +'</dl></div></div>';
         str.push(log);
       }
-      console.info(str)
+      var html = str.join("");
+      console.info(html);
       $(".table-responsive").html(str.join(""));
     });
     return false;
