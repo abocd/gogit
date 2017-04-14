@@ -6,7 +6,7 @@ $(function() {
   $.getJSON("/log/", function(d) {
     var str = [];
     for (var i in d) {
-      str.push('<li><a href="#" data-commit="' + d[i].Commit + '">' + d[i].Date + '</a></li>');
+      str.push('<li><a href="#" data-commit="' + d[i].Commit + '" title="' + d[i].Commit + '">' + d[i].Author + '<em>' + d[i].Date + '</em></a></li>');
     }
     if (!str.length) {
       str.push('<li><a>没有记录！</a></li>')
@@ -31,7 +31,7 @@ $(function() {
       var str = [];
       for(var i in d) {
         var log = '<div class="one-file">'
-        +'<div class="title">'+d[i].FileName+'</div>'
+        +'<div class="title">'+d[i].Filename+'</div>'
         +'<div class="file-log">';
         var num = 1;
         for (var k in d[i].Lines) {
@@ -56,10 +56,10 @@ $(function() {
 
 function get_class(str){
     var f = str.substr(0,1);
-  if(f == "+"){
+  if(f == "+" && str.substr(0,3)!= "+++"){
     return 'jia';
   }
-  if(f == "-"){
+  if(f == "-" && str.substr(0,3)!= "---"){
     return "jian";
   }
   return "";

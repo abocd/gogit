@@ -66,6 +66,9 @@ body {
     background-color: #428bca;
 }
 
+.nav-sidebar > li > a em{
+    display: block;font-size:10px;color:#666;
+}
 
 /*
  * Main content

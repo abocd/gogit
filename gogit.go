@@ -104,6 +104,9 @@ func view(w http.ResponseWriter, r *http.Request){
 	r.ParseForm();
 	from := r.FormValue("from");
 	to := r.FormValue("to");
+	if to == ""{
+		to = "."
+	}
 	cmd := exec.Command("git","diff",from,to);
 	cmd.Dir = dirpath;
 	//此处单行输出比较好
