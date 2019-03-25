@@ -3,14 +3,16 @@
  */
 var renderData = {
   content:[],
-  count:0,
-  current:0,
+  start:0,
+    from:'',
+    to:'',
 }
 const RENDER_NUM = 20;
 function resetRenderData() {
     renderData.content = [];
-    renderData.count = 0;
-    renderData.current = 0;
+    renderData.start = 0;
+    renderData.from ='';
+    renderData.to = '';
 }
 $(function() {
   $.getJSON("/log/", function(d) {
@@ -24,6 +26,7 @@ $(function() {
     $(".nav-sidebar").html(str.join(""));
   });
   $(".nav-sidebar").delegate("li a", "click", function() {
+    resetRenderData();
     var li = $(this).closest("li");
     var next_li = $(li).next();
     var from = $(this).data("commit");
@@ -32,24 +35,29 @@ $(function() {
     } else {
       var to = "";
     }
-    layer.load(2)
-    console.info(to);
-    $.getJSON("/view/", {
-      from: from.substr(0, 7),
-      to: to.substr(0, 7)
-    }, function(d) {
-      layer.closeAll();
-        $(".table-responsive").html('');
-        //渲染右侧
-      renderData.content = d;
-      renderData.current = 0;
-      renderData.count = d.length;
-      startRenderData()
-    });
+    loadView(from,to,0)
     return false;
   });
 });
 
+function loadView(from,to,start) {
+    layer.load(2)
+    console.info(to);
+    $.getJSON("/view/", {
+        from: from.substr(0, 7),
+        to: to.substr(0, 7),
+        start:start
+    }, function(d) {
+        layer.closeAll();
+        $(".table-responsive").html('');
+        //渲染右侧
+        renderData.from = from;
+        renderData.to = to;
+        renderData.content = d;
+        renderData.start = 0;
+        startRenderData()
+    });
+}
 
 function startRenderData() {
     var str = [];

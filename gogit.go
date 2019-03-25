@@ -26,7 +26,8 @@ import (
 	"github.com/kataras/iris/core/errors"
 )
 
-var dirpath string;
+var dirpath string
+var viewLimit int
 
 func www(w http.ResponseWriter, r *http.Request) {
 	//f,err := exec.Command("cd",dirpath).Output()
@@ -107,8 +108,8 @@ type fileChange struct{
 /**
 
  */
-func getCacheContent(from,to string) (error,[]byte,string) {
-	cacheFile := fmt.Sprintf("%s/%s_%s.cache",cacheDir,from,to)
+func getCacheContent(from,to string,start,startEnd int) (error,[]byte,string) {
+	cacheFile := fmt.Sprintf("%s/%s_%s_%d_%d.cache",cacheDir,from,to,start,startEnd)
 	_,err := os.Stat(cacheFile)
 	if err == nil{
 		if content,err := ioutil.ReadFile(cacheFile);err == nil{
@@ -122,12 +123,18 @@ func view(w http.ResponseWriter, r *http.Request){
 	r.ParseForm()
 	from := r.FormValue("from")
 	to := r.FormValue("to")
+	_start := r.FormValue("start")
 	if to == ""{
 		to = "."
 	}
-	fmt.Println("view...",from,to)
+	start,err := strconv.Atoi(_start)
+	if err != nil{
+		start = 0
+	}
+	startEnd := start + viewLimit
+	fmt.Println("view...",from,to,viewLimit)
 
-	err,content,cacheFile := getCacheContent(from,to)
+	err,content,cacheFile := getCacheContent(from,to,start,startEnd)
 	//fmt.Println(err,content)
 	if err == nil{
 
@@ -147,6 +154,7 @@ func view(w http.ResponseWriter, r *http.Request){
 	//line,_ :=bio.ReadString('\n')
 	var lines []string
 	var fileChangeList []fileChange
+	var outputFileChangeList []fileChange
 	var fileChangeInfo fileChange
 	//var isLine = true;
 	fileRegexp := regexp.MustCompile(`^diff \-\-git`)
@@ -172,19 +180,26 @@ func view(w http.ResponseWriter, r *http.Request){
 			lines = append(lines,newline)
 		}
 	}
-	if len(lines) >0 {
+	lineCount := len(lines)
+	if lineCount >0 {
 		fileChangeInfo.Lines = lines
 		fileChangeList = append(fileChangeList, fileChangeInfo)
 	}
+	fmt.Println("lineCount",lineCount)
 	//fmt.Print(fileChangeList)
 	//fmt.Fprintf(w,_json(fileChangeList))
+	for i:= 0; i<lineCount;i++{
+		if i>= start && i< startEnd{
+			outputFileChangeList = append(outputFileChangeList,fileChangeList[i])
+		}
+	}
 
 	fileInfo,_ := os.OpenFile(cacheFile,os.O_WRONLY|os.O_CREATE,0777)
 	defer fileInfo.Close()
-	fileInfo.Write([]byte(_json(fileChangeList)))
+	fileInfo.Write([]byte(_json(outputFileChangeList)))
 	glog.Info("cacheFile",cacheFile)
 
-	w.Write([]byte(_json(fileChangeList)))
+	w.Write([]byte(_json(outputFileChangeList)))
 }
 
 var Tips = `-r gitpath
@@ -198,6 +213,8 @@ func main(){
 	port := flag.Int("p",7878,"Port")
 	//git地址
 	gitrepo := flag.String("r","","Git path")
+	_viewLimit := flag.Int("limit",20,"View limit num")
+	viewLimit = *_viewLimit
 	flag.Parse()
 	dirpath = *gitrepo
 	if dirpath ==""{
