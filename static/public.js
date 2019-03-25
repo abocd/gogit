@@ -1,7 +1,17 @@
 /**
  * Created by aboc on 17-2-24.
  */
-
+var renderData = {
+  content:[],
+  count:0,
+  current:0,
+}
+const RENDER_NUM = 20;
+function resetRenderData() {
+    renderData.content = [];
+    renderData.count = 0;
+    renderData.current = 0;
+}
 $(function() {
   $.getJSON("/log/", function(d) {
     var str = [];
@@ -22,37 +32,48 @@ $(function() {
     } else {
       var to = "";
     }
+    layer.load(2)
     console.info(to);
     $.getJSON("/view/", {
       from: from.substr(0, 7),
       to: to.substr(0, 7)
     }, function(d) {
+      layer.closeAll();
+        $(".table-responsive").html('');
         //渲染右侧
-      var str = [];
-      for(var i in d) {
-        var log = '<div class="one-file">'
-        +'<div class="title">'+d[i].Filename+'</div>'
-        +'<div class="file-log">';
-        var num = 1;
-        for (var k in d[i].Lines) {
-          var line = d[i].Lines[k];
-              log += '<dl class="'+get_class(line)+'">'
-                     +'<dt>'+num+'</dt>'
-                     +'<dd>'+line.replace("<","&lt;").replace(">","&gt;")+'</dd>'
-                     +'</dl>';
-              num ++;
-        }
-        log +'</dl></div></div>';
-        str.push(log);
-      }
-      var html = str.join("");
-      console.info(html);
-      $(".table-responsive").html(str.join(""));
+      renderData.content = d;
+      renderData.current = 0;
+      renderData.count = d.length;
+      startRenderData()
     });
     return false;
   });
 });
 
+
+function startRenderData() {
+    var str = [];
+    for(var i in renderData.content) {
+      var d = renderData.content[i];
+        var log = '<div class="one-file">'
+            +'<div class="title">'+d.Filename+'</div>'
+            +'<div class="file-log">';
+        var num = 1;
+        for (var k in d.Lines) {
+            var line = d.Lines[k];
+            log += '<dl class="'+get_class(line)+'">'
+                +'<dt>'+num+'</dt>'
+                +'<dd>'+line.replace("<","&lt;").replace(">","&gt;")+'</dd>'
+                +'</dl>';
+            num ++;
+        }
+        log +'</dl></div></div>';
+        str.push(log);
+    }
+    var html = str.join("");
+    console.info(html);
+    $(".table-responsive").html(str.join(""));
+}
 
 function get_class(str){
     var f = str.substr(0,1);
