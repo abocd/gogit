@@ -102,7 +102,14 @@ func _json(a interface{}) string{
 
 type fileChange struct{
 	FileName string `json:"Filename"`
+	FileMd5 string `json:"FileMd5"`
 	Lines    []string `json:"Lines"`
+}
+
+type ViewJson struct{
+	Start    int
+	StartEnd int
+	Files    []fileChange
 }
 
 /**
@@ -154,10 +161,14 @@ func view(w http.ResponseWriter, r *http.Request){
 	//line,_ :=bio.ReadString('\n')
 	var lines []string
 	var fileChangeList []fileChange
-	var outputFileChangeList []fileChange
 	var fileChangeInfo fileChange
+	var viewJson ViewJson
 	//var isLine = true;
 	fileRegexp := regexp.MustCompile(`^diff \-\-git`)
+	/**
+	 当前行数量
+	 */
+	var lineNum int
 	for {
 		line,_,err := bio.ReadLine()
 			if err != nil || err == io.EOF{
@@ -173,11 +184,15 @@ func view(w http.ResponseWriter, r *http.Request){
 			}
 			//清空line
 			fileChangeInfo.FileName = newline
+			fileChangeInfo.FileMd5 = cmd5(newline)
 			lines = []string{}
 			//isLine = false;
 
 		} else {
-			lines = append(lines,newline)
+			if lineNum >= start && lineNum < startEnd {
+				lines = append(lines, newline)
+			}
+			lineNum ++
 		}
 	}
 	lineCount := len(lines)
@@ -188,18 +203,15 @@ func view(w http.ResponseWriter, r *http.Request){
 	fmt.Println("lineCount",lineCount)
 	//fmt.Print(fileChangeList)
 	//fmt.Fprintf(w,_json(fileChangeList))
-	for i:= 0; i<lineCount;i++{
-		if i>= start && i< startEnd{
-			outputFileChangeList = append(outputFileChangeList,fileChangeList[i])
-		}
-	}
-
+	viewJson.Start = start
+	viewJson.StartEnd  = startEnd
+	viewJson.Files = fileChangeList
 	fileInfo,_ := os.OpenFile(cacheFile,os.O_WRONLY|os.O_CREATE,0777)
 	defer fileInfo.Close()
-	fileInfo.Write([]byte(_json(outputFileChangeList)))
+	fileInfo.Write([]byte(_json(viewJson)))
 	glog.Info("cacheFile",cacheFile)
 
-	w.Write([]byte(_json(outputFileChangeList)))
+	w.Write([]byte(_json(viewJson)))
 }
 
 var Tips = `-r gitpath
@@ -213,7 +225,7 @@ func main(){
 	port := flag.Int("p",7878,"Port")
 	//git地址
 	gitrepo := flag.String("r","","Git path")
-	_viewLimit := flag.Int("limit",20,"View limit num")
+	_viewLimit := flag.Int("limit",200,"View limit num")
 	viewLimit = *_viewLimit
 	flag.Parse()
 	dirpath = *gitrepo

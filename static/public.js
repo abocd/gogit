@@ -11,9 +11,12 @@ const RENDER_NUM = 20;
 function resetRenderData() {
     renderData.content = [];
     renderData.start = 0;
+    renderData.startEnd = 0;
     renderData.from ='';
     renderData.to = '';
 }
+var isLoad = false
+var canLoad = true
 $(function() {
   $.getJSON("/log/", function(d) {
     var str = [];
@@ -35,9 +38,19 @@ $(function() {
     } else {
       var to = "";
     }
+    $(".table-responsive").html('');
     loadView(from,to,0)
     return false;
   });
+
+  $(window).scroll(function (d) {
+    if(!isLoad && canLoad){
+      if( ($(window).scrollTop() + $(window).height()) > $("body").height() ){
+        isLoad = true;
+        loadView(renderData.from,renderData.to,renderData.startEnd);
+      }
+    }
+  })
 });
 
 function loadView(from,to,start) {
@@ -49,12 +62,17 @@ function loadView(from,to,start) {
         start:start
     }, function(d) {
         layer.closeAll();
-        $(".table-responsive").html('');
         //渲染右侧
         renderData.from = from;
         renderData.to = to;
-        renderData.content = d;
-        renderData.start = 0;
+        renderData.content = d.Files;
+        renderData.start = d.Start;
+        renderData.startEnd = d.StartEnd;
+        if(d.Files != null){
+          canLoad = true
+        } else {
+          canLoad = false
+        }
         startRenderData()
     });
 }
@@ -63,24 +81,52 @@ function startRenderData() {
     var str = [];
     for(var i in renderData.content) {
       var d = renderData.content[i];
-        var log = '<div class="one-file">'
+        if($(".file_"+d.FileMd5).length > 0){
+
+          var num =  $(".file-log dl",$(".file_"+d.FileMd5)).length;
+          console.info("插入到 "+d.FileMd5+" "+num)
+          var log = '';
+            for (var k in d.Lines) {
+                var line = d.Lines[k];
+                var content = line.replace(new RegExp('<','g'),"&lt;").replace(new RegExp('>','g'),"&gt;");
+                if(content == ""){
+                  content = "  "
+                }
+                log += '<dl class="'+get_class(line)+'">'
+                    +'<dt>'+num+'</dt>'
+                    +'<dd>'+content+'</dd>'
+                    +'</dl>';
+                num ++;
+            }
+
+            $(".file-log",$(".file_"+d.FileMd5)).append(log);
+          continue;
+        }
+        var log = '<div class="one-file file_'+d.FileMd5+'">'
             +'<div class="title">'+d.Filename+'</div>'
             +'<div class="file-log">';
         var num = 1;
         for (var k in d.Lines) {
             var line = d.Lines[k];
+            var content = line.replace(new RegExp('<','g'),"&lt;").replace(new RegExp('>','g'),"&gt;");
+            if(content == ""){
+                content = "  "
+            }
             log += '<dl class="'+get_class(line)+'">'
                 +'<dt>'+num+'</dt>'
-                +'<dd>'+line.replace("<","&lt;").replace(">","&gt;")+'</dd>'
+                +'<dd>'+content+'</dd>'
                 +'</dl>';
             num ++;
         }
-        log +'</dl></div></div>';
+        log +='</div></div>';
         str.push(log);
     }
-    var html = str.join("");
-    console.info(html);
-    $(".table-responsive").html(str.join(""));
+    if(str.length > 0) {
+        var html = str.join("");
+        console.info(html.substr(0, 50));
+        $(".table-responsive").append(html);
+    }
+    isLoad = false;
 }
 
 function get_class(str){
