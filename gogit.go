@@ -34,22 +34,13 @@ func www(w http.ResponseWriter, r *http.Request) {
 	//f,err := exec.Command("cd",dirpath).Output()
 	//fmt.Println(r.RequestURI)
 	var html interface{};
-	var Path = strings.SplitN(r.RequestURI,"?",2)
-	var viewRegexp = regexp.MustCompile("^/view")
-	var logRegexp = regexp.MustCompile("^/log")
-	//fmt.Println(Path[0],"Path")
-	if viewRegexp.MatchString(Path[0]){
-		view(w,r)
-	} else if logRegexp.MatchString(Path[0]) {
-		log(w,r)
-	}else{
+
 		tpl := template.New("index.html")
 		tpl.ParseFiles("themes/index.html")
 		err := tpl.Execute(w,html)
 		if err != nil{
 			glog.Error("Html","%s",err)
 		}
-	}
 
 }
 
@@ -259,7 +250,9 @@ func main(){
 	cacheDir = getCurrentCacheDir(dirpathMd5)
 	glog.Asset("Dir",cacheDir)
 	glog.Info("Start","Git目录：%s,浏览器访问：IP:%d",dirpath,*port)
-	fmt.Println(http.Dir("/static/"))
+	//fmt.Println(http.Dir("/static/"))
+	http.HandleFunc("/log/",log)
+	http.HandleFunc("/view/",view)
 	http.Handle("/static/", http.FileServer(http.Dir("./")))
 	http.HandleFunc("/", www)
 	err = http.ListenAndServe(":"+strconv.Itoa(*port), nil)
