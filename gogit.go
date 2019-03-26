@@ -24,6 +24,7 @@ import (
 	"path/filepath"
 	"io/ioutil"
 	"github.com/kataras/iris/core/errors"
+	"time"
 )
 
 var dirpath string
@@ -81,9 +82,13 @@ func log(w http.ResponseWriter, r *http.Request){
 	//fmt.Println(result)
 	var logList []logData
 	//logList = make([]logData)
+	timeLayout := "Mon Jan 02 15:04:05 2006 -0700"
 	for _,val := range result {
 		//fmt.Println("....", val,len(val))
-		dlog := logData{Commit:val[1],Author:val[2],Date:val[3],Memo:strings.Trim(val[4]," ")};
+		//Wed Mar 20 10:30:01 2019 +0800
+		//Mon Jan 02 15:04:05 2006 -0700
+		timeDate,_ := time.Parse(timeLayout,val[3])
+		dlog := logData{Commit:val[1],Author:val[2],Date:timeDate.Format("2006-01-02 15:04:05"),Memo:strings.Trim(val[4]," ")};
 		logList = append(logList,dlog)
 	}
 	//fmt.Println(logList)
